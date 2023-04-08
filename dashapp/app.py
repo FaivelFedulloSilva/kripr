@@ -212,6 +212,7 @@ CDS_PATH = './data/cds_by_frame.json'
 
 # region variable preparation
 selectable_files = os.listdir(DATA_PATH)
+selectable_files = list(filter(lambda x: x.split('.')[-1] == 'bam', selectable_files))
 
 df_rpf: DataFrame = pl.read_parquet(RPF_PATH)
 df_rna: DataFrame = pl.read_parquet(RNA_PATH)
