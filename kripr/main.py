@@ -87,39 +87,6 @@ def get_feature_sequence_parallel(
             
         return pl.DataFrame(results)
 
-def filter_bam(
-    bam_path: str, 
-    output_path: str,
-    filter_by_length: bool,
-    filter_by_mapping_quality: bool,
-    min_length: int,
-    max_length: int,
-    min_mapping_quality: int,
-):
-    # Define a function to filter reads based on length
-    def filter_read_length(read, min_length: int, max_length: int) -> bool:
-        return len(read.query_sequence) >= min_length and len(read.query_sequence) <= max_length
-
-    # Define a function to filter reads based on mapping quality
-    def filter_mapping_quality(read, min_mapping_quality: int) -> bool:
-        return read.mapping_quality >= min_mapping_quality
-    
-    # Open BAM file for reading
-    bamfile = pysam.AlignmentFile(bam_path, "rb")  
-    filtered_reads = [read for read in bamfile]
-    
-    if filter_by_length:
-        filtered_reads = [read for read in filtered_reads if filter_read_length(read, min_length, max_length)]
-    
-    if filter_by_mapping_quality:
-        filtered_reads = [read for read in filtered_reads if filter_mapping_quality(read, min_mapping_quality)]
-
-    filtered_bamfile = pysam.AlignmentFile(output_path, "wb", template=bamfile)
-    for read in filtered_reads:
-        filtered_bamfile.write(read)
-
-    filtered_bamfile.close()  # Close filtered BAM file
-    bamfile.close()
 
 
 def get_mapped_reads_from_bam(bam_path: str, option: int):
