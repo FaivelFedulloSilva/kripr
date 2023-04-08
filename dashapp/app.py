@@ -9,6 +9,11 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import numpy as np
+
+#TODO: Borrar sys cuando se arme el package completo y se publique
+import sys
+sys.path.append('/home/faivel/Documents/Projects/Tesis/kripr/')
+
 from kripr import get_read_length_histogram, BioString, DNAString, DNAStringSet, GTFobject,BAMhandler,FastaHandler,GTFhandler
 import time
 
