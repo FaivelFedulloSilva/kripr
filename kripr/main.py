@@ -87,29 +87,6 @@ def get_feature_sequence_parallel(
             
         return pl.DataFrame(results)
 
-def split_bam_by_chromosome(bam_path: str, output_folder: str, overwrite: bool = False) -> None:
-    if not os.path.exists(output_folder):
-        os.mkdir(output_folder)
-    else:
-        if overwrite:
-            shutil.rmtree(output_folder)
-            os.mkdir(output_folder)
-        else:
-            return
-
-    bam_file = pysam.AlignmentFile(bam_path, 'rb')
-
-    for chromosome in bam_file.references:
-        output_bam = pysam.AlignmentFile(f"{output_folder}/{chromosome}.bam", "wb", template=bam_file)
-
-        for read in bam_file.fetch(chromosome):
-            # write the read to the output BAM file for the current chromosome
-            output_bam.write(read)
-        # close the output BAM file for the current chromosome
-        output_bam.close()
-        # create an index for the output BAM file for the current chromosome
-        pysam.index(f"{output_folder}/{chromosome}.bam")
-
 def filter_bam(
     bam_path: str, 
     output_path: str,

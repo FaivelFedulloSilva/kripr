@@ -9,7 +9,6 @@ from .RNAString import RNAString
 from .main import   get_feature_sequence, \
                     get_feature_sequence_parallel, \
                     save_to_file, \
-                    split_bam_by_chromosome, \
                     get_mapped_reads_from_bam,\
                     get_deseq2_matrix, \
                     normalize_base_with_deseq2, \
