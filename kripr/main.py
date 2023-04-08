@@ -145,22 +145,6 @@ def filter_bam(
     bamfile.close()
 
 
-def get_read_length_histogram(bam_path: str) -> tuple[dict[int,int], int, int]:
-    bamfile = pysam.AlignmentFile(bam_path, "rb") 
-
-    histogram = defaultdict(int)
-    with pysam.AlignmentFile(bam_path, "rb") as bamfile:
-        mapped_reads = 0
-        unmapped_reads = 0
-        for read in bamfile.fetch(until_eof=True):
-            histogram[len(read.query_sequence)] += 1
-            if read.is_unmapped:
-                unmapped_reads += 1
-            else:
-                mapped_reads += 1
-           
-    return histogram, mapped_reads, unmapped_reads
-
 def get_mapped_reads_from_bam(bam_path: str, option: int):
     if option == 0:
         with pysam.AlignmentFile(bam_path, "rb") as bamfile:

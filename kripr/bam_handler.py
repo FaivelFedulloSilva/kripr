@@ -1,3 +1,4 @@
+from collections import defaultdict
 import pysam
 from pysam import AlignmentFile
 from dataclasses import dataclass
@@ -38,9 +39,32 @@ class BAMhandler:
         for read in self.bam_object.fetch(contig, start, end):
             print(read)
             input()
+            
+    def get_read_length_histogram(self) -> tuple[dict[int,int], int, int]:
+        histogram = defaultdict(int)
+        mapped_reads = 0
+        unmapped_reads = 0
+        bam = None
+        if self.bam_object:
+            bam = self.bam_object
+        else:
+            bam = pysam.AlignmentFile(self.path, 'rb')
+        for read in bam.fetch(until_eof=True):
+            histogram[len(read.query_sequence)] += 1
+            if read.is_unmapped:
+                unmapped_reads += 1
+            else:
+                mapped_reads += 1
+        
+        if not self.bam_object:
+            bam.close()
 
+        return histogram, mapped_reads, unmapped_reads
 
+    def close(self):
+        self.bam_object.close()
 
+        
 # RPF_PATH = './Data/RPF_1/accepted_hits_01.bam'
 # TOTAL_PATH = './Data/totalRNA_01/accepted_hits_01.bam'
 

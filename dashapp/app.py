@@ -14,7 +14,7 @@ import numpy as np
 import sys
 sys.path.append('/home/faivel/Documents/Projects/Tesis/kripr/')
 
-from kripr import get_read_length_histogram, BioString, DNAString, DNAStringSet, GTFobject,BAMhandler,FastaHandler,GTFhandler
+from kripr import BioString, DNAString, DNAStringSet, GTFobject,BAMhandler,FastaHandler,GTFhandler
 import time
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
@@ -651,7 +651,8 @@ def select_bam_from_list(items, items_names):
     
     if file_name not in bam_files_info:
         with Timer("Dictionary"):
-            histogram, mapped, unmapped = get_read_length_histogram(DATA_PATH+file_name)
+            bam_file = BAMhandler(DATA_PATH+file_name)
+            histogram, mapped, unmapped = bam_file.get_read_length_histogram()
 
         histogram_as_list = process_bam_histogram(histogram)
 
