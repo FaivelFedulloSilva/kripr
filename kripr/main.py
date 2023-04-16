@@ -88,7 +88,7 @@ def get_feature_sequence_parallel(
         return pl.DataFrame(results)
 
 
-
+#TODO: Que hace esta funcion? Borrarla?
 def get_mapped_reads_from_bam(bam_path: str, option: int):
     if option == 0:
         with pysam.AlignmentFile(bam_path, "rb") as bamfile:
@@ -136,12 +136,13 @@ def get_feature_sequence(
     for row in iter_df:
         feature_seq = []
         feature_depth = []
-        ref_seq = dna.get_sequence(row[1])
+        chromosome = f'chr{row[1]}' if row[1].isdigit() else row[1]
+        ref_seq = dna.get_sequence(chromosome)
         for index in range(len(row[3])):
             seq = ref_seq.get_sub_sequence(row[3][index], row[4][index])
             if row[2][index] == '-':
                 seq = seq.reverse_complement()
-            cov = bam.region_coverage(row[1], row[3][index], row[4][index])
+            cov = bam.region_coverage(chromosome, row[3][index], row[4][index])
             feature_depth += get_second_elements(cov)
             feature_seq.append(seq.get_as_string())
         feature_sequences['transcript_id'].append(row[0])

@@ -28,21 +28,29 @@ class BAMhandler:
             coverage_return.append([splitted_line[1], splitted_line[2]])
         return coverage_return
     
-    def read_count(self, gene):
+    def read_count(
+        self, 
+        gene: tuple[str,int,int] = None,
+        contig: str = None,
+        start: int = None,
+        end: int = None,
+        region: str= None
+    ):
         bam_iter = self.bam_object.count(gene[0], gene[1], gene[2])
             
         return bam_iter
 
-    def do(self):
-        contig = "chr1"
-        start = 3069211
-        end = 3434342
-        regio = f"{contig}:{start}-{end}"
-        for read in self.bam_object.fetch(contig, start, end):
-            print(read)
-            input()
             
     def get_read_length_histogram(self) -> tuple[dict[int,int], int, int]:
+        """
+        Returns a tuple containing a histogram of read lengths, and the number of mapped and unmapped reads.
+
+        Returns:
+        tuple: A tuple containing the following elements:
+            - A dictionary representing the histogram of read lengths, where the keys are the lengths and the values are the number of reads with that length.
+            - An integer representing the total number of mapped reads.
+            - An integer representing the total number of unmapped reads.
+        """
         histogram = defaultdict(int)
         mapped_reads = 0
         unmapped_reads = 0
@@ -72,10 +80,11 @@ class BAMhandler:
                 os.mkdir(output_folder)
             else:
                 return
-
+        print('chau')
         bam_file = pysam.AlignmentFile(self.path, 'rb')
 
         for chromosome in bam_file.references:
+            print(chromosome)
             output_bam = pysam.AlignmentFile(f"{output_folder}/{chromosome}.bam", "wb", template=bam_file)
 
             for read in bam_file.fetch(chromosome):

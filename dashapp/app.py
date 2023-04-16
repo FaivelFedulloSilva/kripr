@@ -204,8 +204,8 @@ def zip_lists_to_dict(keys: list[str], values: list[any]) -> dict:
 
 # region Constants and Hardcoded
 DATA_PATH = './data/'
-RNA_PATH = './data/new_rna.parquet'
-RPF_PATH = './data/new_rpf.parquet'
+RNA_PATH = './data/rna_tam.parquet'
+RPF_PATH = './data/rpf_tam.parquet'
 CDS_PATH = './data/cds_by_frame.json'
 # endregion
 
@@ -288,6 +288,25 @@ data_selection_tab_content = html.Div(
                 )
             ]
         )
+    ]
+)
+
+cds_select_plot_type = html.Div(
+    [
+        html.H4("Plot Type Selector"),
+        html.Div([
+            dbc.Row(
+                [
+                dbc.Label("Type",width="auto"),
+                dbc.RadioItems(['Scatter', 'Bar', 'Line'], value='Scatter', id='cds-plot-type', inline=True)
+                ]
+            ),
+        ]),
+        # html.Div([
+        #     dbc.Label("Coverage % per base (filter)"),
+        #     dcc.Slider(0, 80, 1, value=10, id='coverage-filter-slider', marks=None,
+        #         tooltip={"placement": "bottom", "always_visible": False})
+        # ]),
     ]
 )
 
@@ -475,6 +494,7 @@ controls_card = dbc.Card(
 
 cds_controls_card = dbc.Card(
     [
+        cds_select_plot_type,
         cds_selection_params,
         cds_pause_detection_params,
     ],
@@ -587,8 +607,9 @@ app.layout = html.Div(
     Input('cds-min-region-length', 'value'),
     Input('cds-percentile-slider', 'value'),
     Input('cds-z-score-slider', 'value'),
+    Input('cds-plot-type', 'value')
 )
-def analyze_cds(p_id, frame, pause_method, pause_rolling, rolling_step, rolling_window, max_distance, min_len, percentile_value, z_score_limit):
+def analyze_cds(p_id, frame, pause_method, pause_rolling, rolling_step, rolling_window, max_distance, min_len, percentile_value, z_score_limit, plot_type):
     counts = cdss.filter((pl.col('protein_ids') == p_id) & (pl.col('frame') == int(frame))).select('read_count').to_series().to_list()[0]
     position = np.arange(0, len(counts))
 
@@ -611,8 +632,14 @@ def analyze_cds(p_id, frame, pause_method, pause_rolling, rolling_step, rolling_
 
     fig = go.Figure()
     fig.update_yaxes(fixedrange=True)
-    fig.add_trace(
-        go.Bar(x=position, y=counts, showlegend=False))   
+    trace = None
+    if plot_type == 'Scatter':
+        trace = go.Scatter(x=position, y=counts, showlegend=False, mode='markers')
+    elif plot_type == 'Line':
+        trace = go.Line(x=position, y=counts, showlegend=False)
+    else:
+        trace = go.Bar(x=position, y=counts, showlegend=False)
+    fig.add_trace(trace)   
     print(pauses)
     for pause in pauses:
         fig.add_vrect(

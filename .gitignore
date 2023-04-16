@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 dashapp/data/
+splitted_bam/
