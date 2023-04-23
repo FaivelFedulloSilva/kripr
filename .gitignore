@@ -130,3 +130,9 @@ dmypy.json
 
 dashapp/data/
 splitted_bam/
+
+#data
+*.json
+*.csv
+*.parquet
+*.txt

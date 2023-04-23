@@ -115,4 +115,31 @@ class GTFobject:
             genes[row.gene_id] = transcripts
         return genes
 
+
+    def get_gene_protein_transcript_table(self):
+        query = (
+            self._gtf
+            .lazy()
+            .select(
+                [
+                    pl.col('gene_id'),
+                    pl.col('gene_name'),
+                    pl.col('protein_id'),
+                    pl.col('transcript_id'),
+                    pl.col('transcript_name')
+                ]
+            )
+
+        ).unique().collect()
+        query.write_csv('coorespondance.csv')
+        print(query)
+
+    def get_gene_name(self, name, type, path):
+        df = (
+            pl.scan_csv(path)
+            .filter(pl.col(type) == name)
+            .select('gene_name'))
+        
+        return df.collect()
+
     

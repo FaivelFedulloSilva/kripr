@@ -211,15 +211,18 @@ def get_cds_per_codon_counts(
                 counts2['shift'].append(shift)
                 counts2['p_site_start'].append(p_site_start)
                 counts2['frame'].append((p_site_start)%3)
-                # print(f'name {r.query_name} : readStart(0-base) {r.reference_start} : p-site-position(0-base) {p_site_start} : length {r.query_length} : shift {shift} : frame {p_site_start%3}')
+                print(f'name {r.query_name} : readStart(0-base) {r.reference_start} : p-site-position(0-base) {p_site_start} : length {r.query_length} : shift {shift} : frame {p_site_start%3} : query_alignment_start {r.query_alignment_start}')
                 per_frame[r.query_length] = per_frame.get(r.query_length, [0,0,0])
                 per_frame[r.query_length][(p_site_start)%3] += 1
         # print(len(counts2['read_name']))
+        input()
         if len(counts2['read_name']) >= min_expression:
             df = DataFrame(counts2)
-            # print('length\tframe 0\tframe 1\tframe 2')
-            # for l,f in per_frame.items():
-            #     print(f'{l}\t{f[0]}\t{f[1]}\t{f[2]}')
+            print(protein_id)
+            print(strand)
+            print('length\tframe 0\tframe 1\tframe 2')
+            for l,f in per_frame.items():
+                print(f'{l}\t{f[0]}\t{f[1]}\t{f[2]}')
             frame0_percent = sum([f[0] for f in per_frame.values()])/len(counts2['read_name'])
             frame1_percent = sum([f[1] for f in per_frame.values()])/len(counts2['read_name'])
             frame2_percent = sum([f[2] for f in per_frame.values()])/len(counts2['read_name'])
@@ -297,6 +300,9 @@ def get_cds_per_codon_counts(
 
 if __name__ == '__main__':
 
+    CORESPONDANCE_PATH = './coorespondance.csv'
+
+
     DATA_PATH = './data/'
     RNA_PATH = './data/rna.parquet'
     RPF_PATH = './data/rpf.parquet'
@@ -304,14 +310,14 @@ if __name__ == '__main__':
     REF_PATH = '../RPF-Tesis/Data/reference/hg38.fa'
     GTF_PATH = '../RPF-Tesis/Data/cds_only.gtf'
     RNA_BAMS = [
-        "../RPF-Tesis/Data/BAMS/RNA/ZB/accepted_hits_06.bam",
-        "../RPF-Tesis/Data/BAMS/RNA/ZB/accepted_hits_10.bam",
-        "../RPF-Tesis/Data/BAMS/RNA/ZB/accepted_hits_11.bam",
+        "../RPF-Tesis/Data/BAMS/RNA/D_PLUS/accepted_hits_02.bam",
+        "../RPF-Tesis/Data/BAMS/RNA/D_PLUS/accepted_hits_05.bam",
+        "../RPF-Tesis/Data/BAMS/RNA/D_PLUS/accepted_hits_09.bam",
     ]
     RPF_BAMS = [
-        "../RPF-Tesis/Data/BAMS/RPF/ZB/accepted_hits_06.bam",
-        "../RPF-Tesis/Data/BAMS/RPF/ZB/accepted_hits_10.bam",
-        "../RPF-Tesis/Data/BAMS/RPF/ZB/accepted_hits_11.bam",
+        "../RPF-Tesis/Data/BAMS/RPF/D_PLUS/accepted_hits_02.bam",
+        "../RPF-Tesis/Data/BAMS/RPF/D_PLUS/accepted_hits_05.bam",
+        "../RPF-Tesis/Data/BAMS/RPF/D_PLUS/accepted_hits_09.bam",
     ]
     
     
@@ -330,7 +336,8 @@ if __name__ == '__main__':
     ref = FastaHandler(REF_PATH)
 
     gtf: GTFobject = GTFhandler(GTF_PATH).get_gtf_object()
-
+    print(gtf.get_gene_name('ENSG00000071889', 'gene_id', CORESPONDANCE_PATH))
+    input()
     '''
     1- Obtener CDS pieces para un transcripto 
     2- Unir los CDS pieces y obtener la referencia
@@ -350,13 +357,13 @@ if __name__ == '__main__':
         '31':	14,
         'default':	14
     }
-    transcript_ids = ['ENST00000641399','ENST00000488573','ENST00000482101','ENST00000473497','ENST00000456483','ENST00000446550','ENST00000443427','ENST00000440973','ENST00000427531','ENST00000415488','ENST00000406599','ENST00000404742','ENST00000338799','ENST00000206249','ENST00000643001','ENST00000481743','ENST00000461472','ENST00000379328','ENST00000346208','ENST00000652686','ENST00000514699','ENST00000510170','ENST00000508760','ENST00000505058','ENST00000504572','ENST00000504336','ENST00000503701','ENST00000503201','ENST00000502892','ENST00000502500','ENST00000424646','ENST00000415690','ENST00000394466','ENST00000394464','ENST00000343796','ENST00000231509','ENST00000557538','ENST00000557446','ENST00000557206','ENST00000556827','ENST00000556237','ENST00000555014','ENST00000553999','ENST00000547430','ENST00000539097','ENST00000394997','ENST00000337138','ENST00000323441','ENST00000699988','ENST00000673719','ENST00000652095','ENST00000651694','ENST00000651595','ENST00000651158','ENST00000650658','ENST00000620651','ENST00000614754','ENST00000477468','ENST00000466278','ENST00000463769','ENST00000422851','ENST00000407029','ENST00000402630','ENST00000402042','ENST00000355630','ENST00000265354','ENST00000602216','ENST00000600238','ENST00000600147','ENST00000599898','ENST00000599870','ENST00000597648','ENST00000222247','ENST00000493317','ENST00000485756','ENST00000483765','ENST00000473558','ENST00000466550','ENST00000461690','ENST00000326092','ENST00000319826','ENST00000311549','ENST00000272274']
-
-    get_cds_per_codon_counts(transcript_ids, shift, RPF_BAMS_HANDLERS[0], ref,gtf)
+    # transcript_ids = ['ENST00000641399','ENST00000488573','ENST00000482101','ENST00000473497','ENST00000456483','ENST00000446550','ENST00000443427','ENST00000440973','ENST00000427531','ENST00000415488','ENST00000406599','ENST00000404742','ENST00000338799','ENST00000206249','ENST00000643001','ENST00000481743','ENST00000461472','ENST00000379328','ENST00000346208','ENST00000652686','ENST00000514699','ENST00000510170','ENST00000508760','ENST00000505058','ENST00000504572','ENST00000504336','ENST00000503701','ENST00000503201','ENST00000502892','ENST00000502500','ENST00000424646','ENST00000415690','ENST00000394466','ENST00000394464','ENST00000343796','ENST00000231509','ENST00000557538','ENST00000557446','ENST00000557206','ENST00000556827','ENST00000556237','ENST00000555014','ENST00000553999','ENST00000547430','ENST00000539097','ENST00000394997','ENST00000337138','ENST00000323441','ENST00000699988','ENST00000673719','ENST00000652095','ENST00000651694','ENST00000651595','ENST00000651158','ENST00000650658','ENST00000620651','ENST00000614754','ENST00000477468','ENST00000466278','ENST00000463769','ENST00000422851','ENST00000407029','ENST00000402630','ENST00000402042','ENST00000355630','ENST00000265354','ENST00000602216','ENST00000600238','ENST00000600147','ENST00000599898','ENST00000599870','ENST00000597648','ENST00000222247','ENST00000493317','ENST00000485756','ENST00000483765','ENST00000473558','ENST00000466550','ENST00000461690','ENST00000326092','ENST00000319826','ENST00000311549','ENST00000272274']
+    transcript_ids = ['ENST00000222247']
+    get_cds_per_codon_counts(transcript_ids, shift, RPF_BAMS_HANDLERS[2], ref,gtf)
     input('done')
-    dt_rpf_parallel = get_feature_sequence(transcript_ids,gtf, ref.get_reference(), bam=RPF_BAMS_HANDLERS[0])
+    dt_rpf_parallel = get_feature_sequence(transcript_ids,gtf, ref.get_reference(), bam=RPF_BAMS_HANDLERS[2])
     input('done')
-    dt_rna_parallel = get_feature_sequence(transcript_ids,gtf, ref.get_reference(), bam=RNA_BAMS_HANDLERS[0])
+    dt_rna_parallel = get_feature_sequence(transcript_ids,gtf, ref.get_reference(), bam=RNA_BAMS_HANDLERS[2])
     input('done')
     save_to_file(dt_rpf_parallel, 'rpf_tam')
     save_to_file(dt_rna_parallel, 'rna_tam')

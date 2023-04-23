@@ -133,6 +133,7 @@ def get_feature_sequence(
         'sequence': [],
         'coverage_per_base': []
         }
+    sum_count = 0
     for row in iter_df:
         feature_seq = []
         feature_depth = []
@@ -149,7 +150,9 @@ def get_feature_sequence(
         feature_sequences['gene_id'].append(row[5])
         feature_sequences['coverage_percentage'].append(general_per_base_coverage(feature_depth))
         feature_sequences['sequence'].append("".join(feature_seq))
+        sum_count += sum(feature_depth)
         feature_sequences['coverage_per_base'].append(feature_depth)
+    print(sum_count)
     return pl.DataFrame(feature_sequences)
 '''
 {'transcript_id': 'NR_026823_1', 'seqname': 'chr1', 'strand': ['-', '-', '-'], 'start': [205129, 205793, 206237], 'end': [205690, 205995, 206597], 'gene_id': 'FAM138D'}

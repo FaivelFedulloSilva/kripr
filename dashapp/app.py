@@ -609,47 +609,48 @@ app.layout = html.Div(
     Input('cds-z-score-slider', 'value'),
     Input('cds-plot-type', 'value')
 )
-def analyze_cds(p_id, frame, pause_method, pause_rolling, rolling_step, rolling_window, max_distance, min_len, percentile_value, z_score_limit, plot_type):
-    counts = cdss.filter((pl.col('protein_ids') == p_id) & (pl.col('frame') == int(frame))).select('read_count').to_series().to_list()[0]
-    position = np.arange(0, len(counts))
-
-    if pause_rolling == 'Rolling':
-        if pause_method == 'Boxplot':
-            outliers = detect_rolling_pauses(counts, rolling_window, rolling_step, max_distance, min_len)
-        elif pause_method == 'Percentile':
-            outliers = detect_rolling_percentile_pauses(counts, rolling_window, rolling_step, max_distance, min_len, percentile_value/100)
-        elif pause_method == 'Z-Score':
-            outliers = detect_rolling_z_score_pauses(counts, rolling_window, rolling_step, max_distance, min_len, z_score_limit)
-    else:
-        if pause_method == 'Boxplot':
-            outliers = detect_pauses(counts, max_distance, min_len)
-        elif pause_method == 'Percentile':
-            outliers = detect_percentile_pauses(counts, max_distance, min_len, percentile_value/100)
-        elif pause_method == 'Z-Score':
-            outliers = detect_z_score_pauses(counts, max_distance, min_len, z_score_limit)
-
-    pauses = get_pause_to_graph(outliers)
-
-    fig = go.Figure()
+def analyze_cds(p_id, _frame, pause_method, pause_rolling, rolling_step, rolling_window, max_distance, min_len, percentile_value, z_score_limit, plot_type):
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, subplot_titles=(f"Frame 0", f"Frame 1", f"Frame 2"))
     fig.update_yaxes(fixedrange=True)
-    trace = None
-    if plot_type == 'Scatter':
-        trace = go.Scatter(x=position, y=counts, showlegend=False, mode='markers')
-    elif plot_type == 'Line':
-        trace = go.Line(x=position, y=counts, showlegend=False)
-    else:
-        trace = go.Bar(x=position, y=counts, showlegend=False)
-    fig.add_trace(trace)   
-    print(pauses)
-    for pause in pauses:
-        fig.add_vrect(
-            x0=pause[0][0], x1=pause[0][1],
-            fillcolor="LightSalmon", opacity=0.2,
-            layer="above", line_width=0
+
+    for frame in [0,1,2]:
+        counts = cdss.filter((pl.col('protein_ids') == p_id) & (pl.col('frame') == frame)).select('read_count').to_series().to_list()[0]
+        position = np.arange(0, len(counts))
+
+        if pause_rolling == 'Rolling':
+            if pause_method == 'Boxplot':
+                outliers = detect_rolling_pauses(counts, rolling_window, rolling_step, max_distance, min_len)
+            elif pause_method == 'Percentile':
+                outliers = detect_rolling_percentile_pauses(counts, rolling_window, rolling_step, max_distance, min_len, percentile_value/100)
+            elif pause_method == 'Z-Score':
+                outliers = detect_rolling_z_score_pauses(counts, rolling_window, rolling_step, max_distance, min_len, z_score_limit)
+        else:
+            if pause_method == 'Boxplot':
+                outliers = detect_pauses(counts, max_distance, min_len)
+            elif pause_method == 'Percentile':
+                outliers = detect_percentile_pauses(counts, max_distance, min_len, percentile_value/100)
+            elif pause_method == 'Z-Score':
+                outliers = detect_z_score_pauses(counts, max_distance, min_len, z_score_limit)
+
+        pauses = get_pause_to_graph(outliers)
+        trace = None
+        if plot_type == 'Scatter':
+            trace = go.Scatter(x=position, y=counts, showlegend=False, mode='markers')
+        elif plot_type == 'Line':
+            trace = go.Line(x=position, y=counts, showlegend=False)
+        else:
+            trace = go.Bar(x=position, y=counts, showlegend=False)
+        fig.add_trace(trace, row=frame+1, col=1)   
+        print(pauses)
+        for pause in pauses:
+            fig.add_vrect(
+                x0=pause[0][0], x1=pause[0][1],
+                fillcolor="LightSalmon", opacity=0.2,
+                layer="above", line_width=0, row=frame+1, col=1
+            )
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=30, b=0),
         )
-    fig.update_layout(
-        margin=dict(l=20, r=20, t=30, b=0),
-    )
     return fig
 
 
