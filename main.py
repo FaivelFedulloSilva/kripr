@@ -63,7 +63,7 @@ def use_case_get_transcript_data_to_exploratory_analisis():
     
     with Timer("split bam file"):
         rpf_bam.split_bam_by_chromosome('./data/rpf_splitted_bam')
-
+    
     quantity = 100
     # shuffle(transcript_ids)
     start = time.time()
@@ -157,9 +157,11 @@ def get_cds_per_codon_counts(
             continue
 
         cds_sections.sort(key = lambda x: x[1])
-
+        print('\n\n\n\ncds_sections', cds_sections)
         full_mapped_cds = map_coordinates([[x[1],x[2]] for x in cds_sections])
-        
+        print('>>>>>> LENGTH OF CDS ', len(full_mapped_cds), len(full_mapped_cds)%3)
+        print(f'chr{cds_sections[0][0]}:{full_mapped_cds[0]}-{full_mapped_cds[-1]}')
+        # print(full_mapped_cds)
         if strand == '-':
             full_mapped_cds.reverse()
 
@@ -193,29 +195,36 @@ def get_cds_per_codon_counts(
             39: [0,0,0],
             40: [0,0,0],
         }
+
         if strand == '+':
             reads = bam.fetch(region=f'chr{cds_sections[0][0]}:{full_mapped_cds[0]}-{full_mapped_cds[-1]}')
         else:
             reads = bam.fetch(region=f'chr{cds_sections[0][0]}:{full_mapped_cds[-1]}-{full_mapped_cds[0]}')
 
         for r in reads:
+            if r.is_secondary:
+                continue
             if r.query_length >= min_len and r.query_length <= max_len:
+                # print(r)
                 read_name = r.query_name
                 shift = shift_by_length(r.query_length, shift)  
+                for p in r.get_reference_positions:
+                    print(p.reference_start)
                 try:
                     p_site_start = full_mapped_cds.index(r.reference_start + 1 + shift)
                 except:
+                    print('Not in cds. Is Reverse: ', r.is_reverse)
+                    input()
                     #TODO: Los reads descartados pasan a una "bolsa" que se retorna en caso de que algun parametro asi lo indique
                     continue
                 counts2['read_name'].append(read_name)
                 counts2['shift'].append(shift)
                 counts2['p_site_start'].append(p_site_start)
-                counts2['frame'].append((p_site_start)%3)
-                print(f'name {r.query_name} : readStart(0-base) {r.reference_start} : p-site-position(0-base) {p_site_start} : length {r.query_length} : shift {shift} : frame {p_site_start%3} : query_alignment_start {r.query_alignment_start}')
+                counts2['frame'].append(p_site_start%3)
+                # print(f'name {r.query_name} : readStart(0-base) {r.reference_start} : p-site-position(0-base) {p_site_start} : length {r.query_length} : shift {shift} : frame {p_site_start%3} : query_alignment_start {r.query_alignment_start}')
                 per_frame[r.query_length] = per_frame.get(r.query_length, [0,0,0])
                 per_frame[r.query_length][(p_site_start)%3] += 1
         # print(len(counts2['read_name']))
-        input()
         if len(counts2['read_name']) >= min_expression:
             df = DataFrame(counts2)
             print(protein_id)
@@ -294,6 +303,7 @@ def get_cds_per_codon_counts(
                 # print(f"|{' END ':=^80}|")
                 # input()
                 dt_cdss = DataFrame(cdss)
+                input()
         # print('--------------END----------------')
     print(dt_cdss)
     dt_cdss.write_json('cds_by_frame.json')
@@ -357,9 +367,11 @@ if __name__ == '__main__':
         '31':	14,
         'default':	14
     }
+
     # transcript_ids = ['ENST00000641399','ENST00000488573','ENST00000482101','ENST00000473497','ENST00000456483','ENST00000446550','ENST00000443427','ENST00000440973','ENST00000427531','ENST00000415488','ENST00000406599','ENST00000404742','ENST00000338799','ENST00000206249','ENST00000643001','ENST00000481743','ENST00000461472','ENST00000379328','ENST00000346208','ENST00000652686','ENST00000514699','ENST00000510170','ENST00000508760','ENST00000505058','ENST00000504572','ENST00000504336','ENST00000503701','ENST00000503201','ENST00000502892','ENST00000502500','ENST00000424646','ENST00000415690','ENST00000394466','ENST00000394464','ENST00000343796','ENST00000231509','ENST00000557538','ENST00000557446','ENST00000557206','ENST00000556827','ENST00000556237','ENST00000555014','ENST00000553999','ENST00000547430','ENST00000539097','ENST00000394997','ENST00000337138','ENST00000323441','ENST00000699988','ENST00000673719','ENST00000652095','ENST00000651694','ENST00000651595','ENST00000651158','ENST00000650658','ENST00000620651','ENST00000614754','ENST00000477468','ENST00000466278','ENST00000463769','ENST00000422851','ENST00000407029','ENST00000402630','ENST00000402042','ENST00000355630','ENST00000265354','ENST00000602216','ENST00000600238','ENST00000600147','ENST00000599898','ENST00000599870','ENST00000597648','ENST00000222247','ENST00000493317','ENST00000485756','ENST00000483765','ENST00000473558','ENST00000466550','ENST00000461690','ENST00000326092','ENST00000319826','ENST00000311549','ENST00000272274']
-    transcript_ids = ['ENST00000222247']
-    get_cds_per_codon_counts(transcript_ids, shift, RPF_BAMS_HANDLERS[2], ref,gtf)
+    transcript_ids = gtf.get_transcripts_ids()
+    # transcript_ids = ['ENST00000222247']
+    get_cds_per_codon_counts(transcript_ids, shift, RPF_BAMS_HANDLERS[1], ref,gtf, min_expression=500)
     input('done')
     dt_rpf_parallel = get_feature_sequence(transcript_ids,gtf, ref.get_reference(), bam=RPF_BAMS_HANDLERS[2])
     input('done')
@@ -371,8 +383,6 @@ if __name__ == '__main__':
 
     # transcript_ids = gtf.get_transcripts_ids()#[104:107]
     
-            
-
     # get_deseq2_matrix(RNA_BAMS_HANDLERS, transcript_ids, gtf, './output.csv')
 
     # normalize_base_with_deseq2(transcript_ids, RNA_PATH, '/home/faivel/Documents/Projects/Tesis/RPF-Tesis/Data/BAMS/RNA/ZB/accepted_hits_06.bam.deseq2')

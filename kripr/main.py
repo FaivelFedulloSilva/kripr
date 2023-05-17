@@ -224,7 +224,7 @@ def get_deseq2_matrix(
             for bam in bam_files:
                 bam_count = 0
                 for index in range(len(row['start'])):
-                    bam_count += bam.read_count([row['seqname'], row['start'][index], row['end'][index]])
+                    bam_count += bam.read_count(row['seqname'], row['start'][index], row['end'][index])
                 total_mult *= bam_count
                 count_matrix[bam.path].append(bam_count)
             count_matrix['pseudo_ref'].append(total_mult ** (1/len(bam_files)))

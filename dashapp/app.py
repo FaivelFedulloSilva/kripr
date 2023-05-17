@@ -1,6 +1,6 @@
 import json
 import dash 
-from dash import html, dcc, Input, Output, State, ALL, MATCH
+from dash import html, dcc, Input, Output, State, ALL, MATCH, ctx
 import dash_bootstrap_components as dbc
 import os
 import polars as pl
@@ -18,7 +18,7 @@ from kripr import BioString, DNAString, DNAStringSet, GTFobject,BAMhandler,Fasta
 import time
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
-
+export_clicked = 0
 # region auxiliar functions
 
 class Timer:
@@ -154,6 +154,26 @@ def get_pause_to_graph(pauses, xaxis_offset = 0):
             trace[1].append(p['values'][-1])
         traces.append(trace)
     return [[[t+xaxis_offset for t in x[0]], x[1]] for x in traces]
+
+
+def export_as_table(pauses, chromosome, gen, transcript):
+    table = {
+        'gene_id': [],
+        'chr': [],
+        'transcript_id': [],
+        'pause_start': [],
+        'pause_end': [],
+    }
+    for pause in pauses:
+        table['gene_id'].append(gen)
+        table['chr'].append(chromosome)
+        table['transcript_id'].append(transcript)
+        table['pause_start'].append(pause[0][0])
+        table['pause_end'].append(pause[0][1])
+    print(table)
+    dt = DataFrame(table)
+    dt.write_csv('pause_table.csv')
+
 
 #TODO: cambiar methods a una clase de contantes
 def get_normalize_rpf_over_rna(cov_rpf: list[int], cov_rna: list[int], offset: int=1, window_size:int = 0, method: str= 'Offset'):
@@ -488,6 +508,8 @@ controls_card = dbc.Card(
         transcript_selection_params,
         normalization_params,
         pause_detection_params,
+        dbc.Button('Export', id='export_button'),
+        dbc.Label("",width="auto", id='sum_counts'),
     ],
     body=True,
 )
@@ -722,6 +744,7 @@ def update_range_slider(selected_feature):
 @app.callback(
     Output('comparative-figure', 'figure'),
     Output('graph', 'figure'),
+    Output('sum_counts', 'children'),
     Input('feature-select', 'value'),
     Input('mean-window-size', 'value'),
     Input('zero-handler-method', 'value'),
@@ -737,14 +760,14 @@ def update_range_slider(selected_feature):
     Input('rolling-window', 'value'),
     Input('rna-coverage-region-filter', 'value'),
     Input('use_deseq2', 'value'),
+    Input('export_button', 'n_clicks')
     # Input('pause-method', 'value'),
     # Input('pause-window', 'value')
 )
 def update_figure(  selected_feature, window_size, method, max_distance, 
                     min_len, rna_offset, region, pause_method, percentile_value, 
                     z_score_limit, pause_rolling, rolling_step, rolling_window,
-                    rna_coverage_minimum, use_deseq2):
-    
+                    rna_coverage_minimum, use_deseq2, export):
     # df = filtered_gtf.get_transcripts_data([selected_feature]) 
 
     # feature_sequences_rpf = get_feature_sequence_and_coverage(df, dna.get_reference(), bam_rpf)
@@ -860,7 +883,10 @@ def update_figure(  selected_feature, window_size, method, max_distance,
         margin=dict(l=20, r=20, t=30, b=0),
     )
 
-    return fig,fig2
+    if 'export_button' == ctx.triggered_id:
+        export_as_table(pauses,'Agregar',feature_sequences_rpf.select('gene_id').to_series().to_list()[0],selected_feature)
+
+    return fig,fig2, f'\nRPF: {sum(cov_rpf)} \n RNA: {sum(cov_rna)}'
 
 @app.callback(
     Output('feature-select', 'options'),
